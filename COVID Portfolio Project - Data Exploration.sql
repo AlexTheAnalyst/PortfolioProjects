@@ -1,3 +1,5 @@
+-- This is just a new line I typed for my testing
+
 /*
 Covid 19 Data Exploration 
 
