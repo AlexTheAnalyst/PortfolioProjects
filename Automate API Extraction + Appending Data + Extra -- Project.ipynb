@@ -1,0 +1,378 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "70cbe983",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from requests import Request, Session\n",
+    "from requests.exceptions import ConnectionError, Timeout, TooManyRedirects\n",
+    "import json\n",
+    "\n",
+    "url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest' \n",
+    "#Original Sandbox Environment: 'https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'\n",
+    "parameters = {\n",
+    "  'start':'1',\n",
+    "  'limit':'15',\n",
+    "  'convert':'USD'\n",
+    "}\n",
+    "headers = {\n",
+    "  'Accepts': 'application/json',\n",
+    "  'X-CMC_PRO_API_KEY': '0ad53085-1cb2-4eb8-ad9e-3ffbd7e56509',\n",
+    "}\n",
+    "\n",
+    "session = Session()\n",
+    "session.headers.update(headers)\n",
+    "\n",
+    "try:\n",
+    "  response = session.get(url, params=parameters)\n",
+    "  data = json.loads(response.text)\n",
+    "  #print(data)\n",
+    "except (ConnectionError, Timeout, TooManyRedirects) as e:\n",
+    "  print(e)\n",
+    "\n",
+    "#NOTE:\n",
+    "# I had to go in and put \"jupyter notebook --NotebookApp.iopub_data_rate_limit=1e10\"\n",
+    "# Into the Anaconda Prompt to change this to allow to pull data\n",
+    "\n",
+    "# If that didn't work try using the local host URL as shown in the video"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 63,
+   "id": "31bdff98",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "type(data)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "4cbf82ee",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "\n",
+    "\n",
+    "#This allows you to see all the columns, not just like 15\n",
+    "pd.set_option('display.max_columns', None)\n",
+    "pd.set_option('display.max_rows', None)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 64,
+   "id": "48c3b340",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#This normalizes the data and makes it all pretty in a dataframe\n",
+    "\n",
+    "df = pd.json_normalize(data['data'])\n",
+    "df['timestamp'] = pd.to_datetime('now')\n",
+    "df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 60,
+   "id": "d792e388",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "def api_runner():\n",
+    "    global df\n",
+    "    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest' \n",
+    "    #Original Sandbox Environment: 'https://sandbox-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'\n",
+    "    parameters = {\n",
+    "      'start':'1',\n",
+    "      'limit':'15',\n",
+    "      'convert':'USD'\n",
+    "    }\n",
+    "    headers = {\n",
+    "      'Accepts': 'application/json',\n",
+    "      'X-CMC_PRO_API_KEY': '0ad53085-1cb2-4eb8-ad9e-3ffbd7e56509',\n",
+    "    }\n",
+    "\n",
+    "    session = Session()\n",
+    "    session.headers.update(headers)\n",
+    "\n",
+    "    try:\n",
+    "      response = session.get(url, params=parameters)\n",
+    "      data = json.loads(response.text)\n",
+    "      #print(data)\n",
+    "    except (ConnectionError, Timeout, TooManyRedirects) as e:\n",
+    "      print(e)\n",
+    "\n",
+    "#NOTE:\n",
+    "# I had to go in and put \"jupyter notebook --NotebookApp.iopub_data_rate_limit=1e10\"\n",
+    "# Into the Anaconda Prompt to change this to allow to pull data\n",
+    "    \n",
+    "    # Use this if you just want to keep it in a dataframe\n",
+    "    df2 = pd.json_normalize(data['data'])\n",
+    "    df2['Timestamp'] = pd.to_datetime('now')\n",
+    "    df = df.append(df2)\n",
+    "\n",
+    "\n",
+    "    # Use this if you want to create a csv and append data to it\n",
+    "    #df = pd.json_normalize(data['data'])\n",
+    "    #df['timestamp'] = pd.to_datetime('now')\n",
+    "    #df\n",
+    "\n",
+    "    #if not os.path.isfile(r'C:\\Users\\alexf\\OneDrive\\Documents\\Python Scripts\\API.csv'):\n",
+    "        #df.to_csv(r'C:\\Users\\alexf\\OneDrive\\Documents\\Python Scripts\\API.csv', header='column_names')\n",
+    "    #else:\n",
+    "        #df.to_csv(r'C:\\Users\\alexf\\OneDrive\\Documents\\Python Scripts\\API.csv', mode='a', header=False)\n",
+    "        \n",
+    "    #Then to read in the file: df = pd.read_csv(r'C:\\Users\\alexf\\OneDrive\\Documents\\Python Scripts\\API.csv')\n",
+    "\n",
+    "# If that didn't work try using the local host URL as shown in the video"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 67,
+   "id": "9e272cea",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import os \n",
+    "from time import time\n",
+    "from time import sleep\n",
+    "\n",
+    "for i in range(333):\n",
+    "    api_runner()\n",
+    "    print('API Runner completed')\n",
+    "    sleep(60) #sleep for 1 minute\n",
+    "exit()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 68,
+   "id": "bf9a55d9",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df72 = pd.read_csv(r'C:\\Users\\alexf\\OneDrive\\Documents\\Python Scripts\\API.csv')\n",
+    "df72"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 69,
+   "id": "8902053b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "b7c56101",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# One thing I noticed was the scientific notation. I like it, but I want to be able to see the numbers in this case\n",
+    "\n",
+    "pd.set_option('display.float_format', lambda x: '%.5f' % x)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 70,
+   "id": "56b5a577",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 71,
+   "id": "e4227c53",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Now let's look at the coin trends over time\n",
+    "\n",
+    "df3 = df.groupby('name', sort=False)[['quote.USD.percent_change_1h','quote.USD.percent_change_24h','quote.USD.percent_change_7d','quote.USD.percent_change_30d','quote.USD.percent_change_60d','quote.USD.percent_change_90d']].mean()\n",
+    "df3"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 72,
+   "id": "f3e2d1db",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df4 = df3.stack()\n",
+    "df4"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 73,
+   "id": "2ef8ee34",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "type(df4)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 74,
+   "id": "4b7b94bf",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df5 = df4.to_frame(name='values')\n",
+    "df5"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "id": "b8125368",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df5.count()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "id": "fc6ade71",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Because of how it's structured above we need to set an index. I don't want to pass a column as an index for this dataframe\n",
+    "#So I'm going to create a range and pass that as the dataframe. You can make this more dynamic, but I'm just going to hard code it\n",
+    "\n",
+    "\n",
+    "index = pd.Index(range(90))\n",
+    "\n",
+    "# Set the above DataFrame index object as the index\n",
+    "# using set_index() function\n",
+    "df6 = df5.set_index(index)\n",
+    "df6\n",
+    "\n",
+    "# If it only has the index and values try doing reset_index like \"df5.reset_index()\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "id": "7d13cd4d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Change the column name\n",
+    "\n",
+    "df7 = df6.rename(columns={'level_1': 'percent_change'})\n",
+    "df7"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "id": "a72480a3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df7['percent_change'] = df7['percent_change'].replace(['quote.USD.percent_change_24h','quote.USD.percent_change_7d','quote.USD.percent_change_30d','quote.USD.percent_change_60d','quote.USD.percent_change_90d'],['24h','7d','30d','60d','90d'])\n",
+    "df7"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 47,
+   "id": "16a3121f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import seaborn as sns\n",
+    "import matplotlib.pyplot as plt"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "id": "c287a308",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.catplot(x='percent_change', y='values', hue='name', data=df7, kind='point')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 80,
+   "id": "2915d494",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Now to do something much simpler\n",
+    "# we are going to create a dataframe with the columns we want\n",
+    "\n",
+    "df10 = df[['name','quote.USD.price','timestamp']]\n",
+    "df10 = df10.query(\"name == 'Bitcoin'\")\n",
+    "df10"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 81,
+   "id": "ae8459af",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "sns.set_theme(style=\"darkgrid\")\n",
+    "\n",
+    "sns.lineplot(x='timestamp', y='quote.USD.price', data = df10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "db10f9de",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.8.8"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
