@@ -70,6 +70,23 @@ Group by continent
 order by TotalDeathCount desc
 
 
+-- View mortality rate per continent i.e. ratio of total recorder deaths to recorded cases
+
+WITH mortalityTable AS 
+(
+    SELECT location, 
+    SUM(cast(new_deaths as int)) as total_deaths,
+    SUM(new_cases) as total_cases
+    From PortfolioProject..CovidDeaths
+    WHERE continent IS NULL
+    GROUP BY location, continent
+)
+SELECT *,
+CAST(Round((total_deaths/total_cases)*100, 2) as nvarchar(5)) + ' %' AS MortalityRate 
+FROM mortalityTable
+WHERE location NOT IN ('World','International')
+ORDER BY 4 DESC
+
 
 -- GLOBAL NUMBERS
 
@@ -116,32 +133,21 @@ From PopvsVac
 
 
 
--- Using Temp Table to perform Calculation on Partition By in previous query
+-- Code which shows vaccination rate administered by health care location-wise for each
+-- continent
 
-DROP Table if exists #PercentPopulationVaccinated
-Create Table #PercentPopulationVaccinated
-(
-Continent nvarchar(255),
-Location nvarchar(255),
-Date datetime,
-Population numeric,
-New_vaccinations numeric,
-RollingPeopleVaccinated numeric
-)
-
-Insert into #PercentPopulationVaccinated
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
-, SUM(CONVERT(int,vac.new_vaccinations)) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
---, (RollingPeopleVaccinated/population)*100
-From PortfolioProject..CovidDeaths dea
-Join PortfolioProject..CovidVaccinations vac
-	On dea.location = vac.location
+DROP Table if exists PercentPopulationVaccinated
+select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(CONVERT(float,vac.new_vaccinations)) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+into PercentPopulationVaccinated
+from PortfolioProject..CovidDeaths dea
+join PortfolioProject..CovidVaccinations vac
+	on dea.location = vac.location
 	and dea.date = vac.date
---where dea.continent is not null 
---order by 2,3
-
-Select *, (RollingPeopleVaccinated/Population)*100
-From #PercentPopulationVaccinated
+Select *, CAST(Round((RollingPeopleVaccinated/Population)*100, 5) as nvarchar(10)) + ' %' AS VaccinationRate
+From PercentPopulationVaccinated
+where new_vaccinations is not null
+order by 2
 
 
 
