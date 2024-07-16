@@ -62,7 +62,7 @@ order by TotalDeathCount desc
 
 -- Showing contintents with the highest death count per population
 
-Select continent, MAX(cast(Total_deaths as int)) as TotalDeathCount
+Select continent, SUM(cast(new_deaths as int)) as TotalDeathCount
 From PortfolioProject..CovidDeaths
 --Where location like '%states%'
 Where continent is not null 
